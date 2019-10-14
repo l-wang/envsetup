@@ -1,0 +1,21 @@
+---
+
+- name: Check if database is up and running
+  command: "{{postgres_install_path}}/psql postgres -c 'select 1'"
+  register: dbstatus
+  ignore_errors: yes
+
+- name: Build database
+  command: "{{postgres_install_path}}/initdb -D {{database_path}}"
+  when: dbstatus.rc != 0
+  register: buildstatus
+
+- debug:
+    msg: "{{buildstatus}}"
+- name: Start database
+  command: "{{postgres_install_path}}/pg_ctl -D {{database_path}} -l /tmp/logfile start"
+  when: not buildstatus.skipped
+
+- name: Create tpc-dh database
+  command: "{{postgres_install_path}}/createdb tpcds"
+  when: not buildstatus.skipped

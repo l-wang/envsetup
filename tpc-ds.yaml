@@ -20,3 +20,4 @@
 
   roles:
     - tpc_ds_gen
+    - gen_postgres_cluster
