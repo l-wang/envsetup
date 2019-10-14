@@ -1,0 +1,62 @@
+---
+- name: Clone tvesely/TPC-DS
+  git:
+    repo: "https://github.com/tvesely/TPC-DS"
+    dest: "{{ lookup('env','HOME') }}/workspace/TPC-DS"
+    remote: origin
+    update: false
+
+- name: Build dsdgen CLI tool
+  command: "make -j8"
+  args:
+    chdir: "{{ lookup('env','HOME') }}/workspace/TPC-DS/00_compile_tpcds/tools"
+  tags:
+      - tpcds-dbgen
+- name: Install dsdgen CLI tool in PATH
+  copy:
+    src: "{{ lookup('env','HOME') }}/workspace/TPC-DS/00_compile_tpcds/tools/dsdgen"
+    dest: /usr/local/bin/dsdgen
+    mode: 0755
+  become: yes
+  copy:
+    src: "{{ lookup('env','HOME') }}/workspace/TPC-DS/00_compile_tpcds/tools/tpcds.idx"
+    dest: /usr/local/bin/tpcds.idx
+    mode: 0755
+  become: yes
+
+- name: Install dsdgen_generate_data.sh CLI tool in PATH
+  copy:
+    src: "{{ lookup('env','HOME') }}/workspace/TPC-DS/01_gen_data/generate_data.sh"
+    dest: /usr/local/bin/dsdgen_generate_data.sh
+    mode: 0755
+  become: yes
+
+- name: Generate tcp-ds datagen path names
+  set_fact: path_item="{{item}}"
+  with_sequence: start=1 end={{ansible_facts["processor_vcpus"]}} format={{datagen_path}}/gen_data_scale_{{datagen_scale}}_%02d_of_{{ansible_facts["processor_vcpus"]}}
+  register: path_result
+
+- name: Create a tcp-ds paths
+  file:
+    path: "{{datagen_path}}"
+    state: directory
+    owner: "{{ lookup('env', 'USERNAME')}}"
+    mode: 0755
+  become: true
+
+- name: Run tpc-ds data generation with scale {{datagen_scale}} with parallelism {{ansible_facts['processor_vcpus']}}
+  command: "dsdgen_generate_data.sh {{datagen_scale}} 1 {{ansible_facts['processor_vcpus']}} {{item.1}}"
+  with_indexed_items: "{{path_result.results | map(attribute='ansible_facts.path_item') | list}}" 
+  async: 86400
+  poll: 0
+  register: _create_instances
+
+- name: Wait for tpc-dh datagen to finish
+  async_status:
+    jid: "{{ item.ansible_job_id }}"
+  register: _jobs
+  until: _jobs.finished
+  delay: 60
+  retries: "{{datagen_scale * 10}}"
+  with_items: "{{ _create_instances.results }}"
+
