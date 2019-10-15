@@ -12,12 +12,20 @@
     chdir: "{{ lookup('env','HOME') }}/workspace/TPC-DS/00_compile_tpcds/tools"
   tags:
       - tpcds-dbgen
+
 - name: Install dsdgen CLI tool in PATH
   copy:
     src: "{{ lookup('env','HOME') }}/workspace/TPC-DS/00_compile_tpcds/tools/dsdgen"
     dest: /usr/local/bin/dsdgen
     mode: 0755
   become: yes
+- name: Install dsqgen CLI tool in PATH
+  copy:
+    src: "{{ lookup('env','HOME') }}/workspace/TPC-DS/00_compile_tpcds/tools/dsqgen"
+    dest: /usr/local/bin/dsqgen
+    mode: 0755
+  become: yes
+- name: Install tpcds.idx in PATH
   copy:
     src: "{{ lookup('env','HOME') }}/workspace/TPC-DS/00_compile_tpcds/tools/tpcds.idx"
     dest: /usr/local/bin/tpcds.idx
@@ -50,6 +58,41 @@
   async: 86400
   poll: 0
   register: _create_instances
+
+- name: Generate tcp-ds query0.sql
+  command: "{{ lookup('env','HOME') }}/workspace/TPC-DS/00_compile_tpcds/tools/dsqgen -input {{ lookup('env','HOME') }}/workspace/TPC-DS/00_compile_tpcds/query_templates/templates.lst -directory {{ lookup('env','HOME') }}/workspace/TPC-DS/00_compile_tpcds/query_templates -output {{ lookup('env','HOME') }}/workspace/TPC-DS/01_gen_data/ -dialect pivotal -scale {{datagen_scale}} -verbose y"
+  args:
+    chdir: "{{ lookup('env','HOME') }}/workspace/TPC-DS/00_compile_tpcds/tools/"
+
+- name: Generate tcp-ds queries
+  shell: |
+	query_id=1
+	for p in $(seq 1 99); do
+			q=$(printf %02d $query_id)
+			filename=$file_id.tpcds.$q.sql
+			template_filename=query$p.tpl
+			start_position=""
+			end_position=""
+			for pos in $(grep -n $template_filename $PWD/query_0.sql | awk -F ':' '{print $1}'); do
+					if [ "$start_position" == "" ]; then
+							start_position=$pos
+					else
+							end_position=$pos
+					fi
+			done
+
+			echo "echo \":EXPLAIN_ANALYZE\" > $PWD/../05_sql/$filename"
+			echo ":EXPLAIN_ANALYZE" > $PWD/../05_sql/$filename
+			echo "sed -n \"$start_position\",\"$end_position\"p $PWD/query_0.sql >> $PWD/../05_sql/$filename"
+			sed -n "$start_position","$end_position"p $PWD/query_0.sql >> $PWD/../05_sql/$filename
+			query_id=$(($query_id + 1))
+			file_id=$(($file_id + 1))
+			echo "Completed: $PWD/../05_sql/$filename"
+	done
+  args:
+    chdir: "{{ lookup('env','HOME') }}/workspace/TPC-DS/00_compile_tpcds/tools/"
+
+  command: "{{ lookup('env','HOME') }}/workspace/TPC-DS/01_gen_data/generate_queries.sh {{datagen_scale}}"
 
 - name: Wait for tpc-dh datagen to finish
   async_status:
