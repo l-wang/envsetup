@@ -16,11 +16,18 @@
         that:
           - git_user is defined
           - git_email is defined
-
   roles:
     - common
     - dev_tools
     - postgres_dev
+
+  tasks:
+    - import_role:
+        name: makeinstall_gpdb
+      when: build_gpdb
+      vars:
+        greenplum_config: {}
+        xerces_config: {}
 
 - import_playbook: windows.yaml
   when: is_wsl == True
