@@ -7,6 +7,12 @@ xerces_default_config:
 
     prefix: "/usr/local/"
 
+orca_default_config:
+    repo_directory: "{{ ansible_env.HOME }}/workspace/gporca"
+    build_core_count: "{{ build_core_count }}"
+
+    prefix: "/usr/local/"
+
 greenplum_default_config:
     repo_directory: "{{ansible_env.HOME}}/workspace/gpdb"
     repo_branch: "master"

@@ -24,7 +24,7 @@
   tasks:
     - import_role:
         name: makeinstall_gpdb
-      when: build_gpdb
+      when: build_gpdb is defined
       vars:
         greenplum_config: {}
         xerces_config: {}
