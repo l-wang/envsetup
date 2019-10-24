@@ -1,6 +1,6 @@
 ---
 - name: Get configuration
-- set_fact:
+  set_fact:
     _greenplum_config: "{{ greenplum_default_config | combine(greenplum_config, recursive=True) }}"
   no_log: True
 - set_fact:
