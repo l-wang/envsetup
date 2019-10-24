@@ -2,13 +2,10 @@
 - name: Get configuration
   set_fact:
     _greenplum_config: "{{ greenplum_default_config | combine(greenplum_config, recursive=True) }}"
-  no_log: True
 - set_fact:
     _orca_config: "{{ orca_default_config | combine(orca_config, recursive=True) }}"
 - set_fact:
     _xerces_config: "{{ xerces_default_config | combine(xerces_config, recursive=True) }}"
-  no_log: True
-
 
 - name: Get ORCA version for build
   set_fact:
@@ -19,6 +16,7 @@
     src: "{{ _greenplum_config.repo_directory}}/concourse/tasks/compile_gpdb.yml"
   register: slurpfile
   when: _orca_tag is not defined
+  ignore_errors: True
 
 - set_fact:
     _orca_version: "{{ (slurpfile['content'] | b64decode | from_yaml).params.ORCA_TAG }}"

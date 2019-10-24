@@ -1,4 +1,8 @@
 ---
+# Will be overridden if it is possible to build ORCA
+_build_xerces: False
+_build_orca: False
+
 build_core_count: "{{ ansible_facts['processor_vcpus'] }}"
 
 xerces_default_config:
