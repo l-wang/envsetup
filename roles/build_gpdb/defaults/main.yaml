@@ -1,4 +1,7 @@
 ---
+gpdb_repo: https://github.com/greenplum-db/gpdb
+gpdb_version: HEAD
+
 # Will be overridden if it is possible to build ORCA
 _build_xerces: False
 _build_orca: False
@@ -21,9 +24,9 @@ orca_default_config:
     prefix: "/usr/local/"
 
 greenplum_default_config:
-    repo: https://github.com/greenplum-db/gpdb
+    repo: "{{ gpdb_repo }}"
     repo_directory: "{{ansible_env.HOME}}/workspace/gpdb"
-    repo_version: "HEAD"
+    repo_version: "{{ gpdb_version }}"
     repo_force: False
     repo_update: False
 
@@ -39,3 +42,7 @@ greenplum_default_config:
     prefix: "/usr/local/gpdb"
 
     build_core_count: "{{ build_core_count }}"
+
+greenplum_standard_build:
+    enable_cassert: False
+    cflags: "-O2 -fno-omit-frame-pointer"
