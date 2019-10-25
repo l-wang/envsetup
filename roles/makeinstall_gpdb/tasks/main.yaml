@@ -7,10 +7,18 @@
 - set_fact:
     _xerces_config: "{{ xerces_default_config | combine(xerces_config, recursive=True) }}"
 
+- name: Check out gpdb version {{ _greenplum_config.repo_version }}
+  git:
+    repo: "{{ _greenplum_config.repo }}"
+    dest: "{{ _greenplum_config.repo_directory }}"
+    version: "{{ _greenplum_config.repo_version }}"
+    force: "{{ _greenplum_config.repo_force }}"
+    update: "{{ _greenplum_config.repo_update }}"
+
 - name: Get ORCA version for build
   set_fact:
-    _orca_tag: "{{ _orca_config.orca_version_override }}"
-  when: _greenplum_config.orca_version_override is defined
+    _orca_tag: "{{ _orca_config.orca_tag_override }}"
+  when: _greenplum_config.orca_tag_override is defined
 
 - slurp:
     src: "{{ _greenplum_config.repo_directory}}/concourse/tasks/compile_gpdb.yml"
@@ -19,7 +27,7 @@
   ignore_errors: True
 
 - set_fact:
-    _orca_version: "{{ (slurpfile['content'] | b64decode | from_yaml).params.ORCA_TAG }}"
+    _orca_tag: "{{ (slurpfile['content'] | b64decode | from_yaml).params.ORCA_TAG }}"
   when:
    - slurpfile['content'] is defined
    - slurpfile['content'] | b64decode | from_yaml is defined
@@ -29,9 +37,11 @@
     _build_xerces: True
     _build_orca: True
   when:
-    - _orca_version is defined
+    - _orca_tag is defined
     - _greenplum_config.use_orca
 
 - include: gp_xerces.yaml
   when: _build_xerces
+- include: gporca.yaml
+  when: _build_orca
 
