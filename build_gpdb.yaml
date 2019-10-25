@@ -8,4 +8,4 @@
   gather_facts: yes
 
   roles:
-    - makeinstall_gpdb
+    - build_gpdb
