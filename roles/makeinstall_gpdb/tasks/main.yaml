@@ -44,4 +44,4 @@
   when: _build_xerces
 - include: gporca.yaml
   when: _build_orca
-
+- include: gpdb.yaml

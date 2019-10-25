@@ -21,13 +21,10 @@
     - dev_tools
     - postgres_dev
 
-  tasks:
-    - import_role:
-        name: makeinstall_gpdb
-      when: build_gpdb is defined
-      vars:
-        greenplum_config: {}
-        xerces_config: {}
+- import_playbook: build_gpdb.yaml
+  when: build_gpdb is defined
+  tags:
+    - build_gpdb
 
 - import_playbook: windows.yaml
   when: is_wsl == True
