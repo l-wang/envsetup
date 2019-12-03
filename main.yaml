@@ -5,8 +5,8 @@
   vars:
     is_wsl: False
     is_vagrant: False
-  vars_files:
-    - "{{userconfig}}"
+    #vars_files:
+    #  - "{{userconfig}}"
   tags:
     - linux
 
