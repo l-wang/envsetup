@@ -71,6 +71,12 @@
     name: "libxi6"
     state: present
   become: yes
+# Required for X11 selections (clipboard)
+- name: Install the xclip package
+  apt:
+    name: "xclip"
+    state: present
+  become: yes
 - name: Install the libxrender1 package
   apt:
     name: "libxrender1"
